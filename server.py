@@ -12,20 +12,19 @@ def rectify_filepath(filename):
     return fullpath
 
 
-def read_only_auth(token):
-    if token == 'readonlypassword':  # update this
-        return True
-    else:
-        return False
-
-
-def write_auth(token):
-    if token == 'supersecretpassword':  # update this
-        return True
-    else:
-        return False
+def get_token_role(req):
+    try:
+        token = req.headers.get('token')
+        fullpath = rectify_filepath('tokens.json')
+        with open(fullpath, 'r') as json_file:
+            tokens = json.load(json_file)
+        for i in tokens:
+            if i['token'] == token:
+                return i['role']
+        return None
+    except:
+        return None
     
-
 
 app = flask.Flask('phonebook')
 
@@ -33,7 +32,8 @@ app = flask.Flask('phonebook')
 
 @app.route('/', methods=['get'])
 def home():
-    if not read_only_auth(request.headers.get('token')):
+    role = get_token_role(request)
+    if role != 'readonly':
         return 'Token not accepted', 403
     files = os.listdir('%s/data' % sys.path[0])
     return flask.Response(json.dumps(files), mimetype='application/json')
@@ -41,7 +41,8 @@ def home():
 
 @app.route('/<filename>', methods=['get'])
 def fetch(filename):
-    if not read_only_auth(request.headers.get('token')):
+    role = get_token_role(request)
+    if role != 'readonly':
         return 'Token not accepted', 403
     try:
         fullpath = rectify_filepath(filename)
@@ -54,8 +55,10 @@ def fetch(filename):
 
 @app.route('/new/<filename>', methods=['post'])
 def post_new(filename):
-    if not write_auth(request.headers.get('token')):
+    role = get_token_role(request)
+    if role != 'readwrite':
         return 'Token not accepted', 403
+
     try:
         fullpath = rectify_filepath(filename)
         with open(fullpath, 'w') as json_file:
