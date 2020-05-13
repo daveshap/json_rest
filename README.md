@@ -15,7 +15,8 @@ Example tokens file:
 ```json
 [
 {"token": "readonlypassword", "role": "readonly"},
-{"token": "supersecretpassword", "role": "readwrite"}
+{"token": "supersecretpassword", "role": "readwrite"},
+{"token": "adminpassword", "role": "admin"}
 ]
 ```
 

@@ -26,6 +26,7 @@ def get_token_role(req):
         return None
     
 
+
 app = flask.Flask('phonebook')
 
 
@@ -33,6 +34,7 @@ app = flask.Flask('phonebook')
 @app.route('/', methods=['get'])
 def home():
     # check authentication
+    # TODO come up with better RBAC handlers
     role = get_token_role(request)
     if role != 'readonly' or role != 'readwrite':
         return 'Token not accepted', 403
@@ -45,6 +47,7 @@ def home():
 @app.route('/<filename>', methods=['get'])
 def fetch(filename):
     # check authentication
+    # TODO come up with better RBAC handlers
     role = get_token_role(request)
     if role != 'readonly' or role != 'readwrite':
         return 'Token not accepted', 403
@@ -64,6 +67,7 @@ def fetch(filename):
 @app.route('/new/<filename>', methods=['post'])
 def post_new(filename):
     # check authentication
+    # TODO come up with better RBAC handlers
     role = get_token_role(request)
     if role != 'readwrite' or role != 'admin':
         return 'Token not accepted', 403
