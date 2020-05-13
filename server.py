@@ -32,18 +32,26 @@ app = flask.Flask('phonebook')
 
 @app.route('/', methods=['get'])
 def home():
+    # check authentication
     role = get_token_role(request)
-    if role != 'readonly':
+    if role != 'readonly' or role != 'readwrite':
         return 'Token not accepted', 403
+    
+    # enumerate files
     files = os.listdir('%s/data' % sys.path[0])
     return flask.Response(json.dumps(files), mimetype='application/json')
 
 
 @app.route('/<filename>', methods=['get'])
 def fetch(filename):
+    # check authentication
     role = get_token_role(request)
-    if role != 'readonly':
+    if role != 'readonly' or role != 'readwrite':
         return 'Token not accepted', 403
+    if role != 'admin' and filename == 'tokens.json':
+        return 'Insufficient privileges to view tokens', 403
+    
+    # try to get JSON and return
     try:
         fullpath = rectify_filepath(filename)
         with open(fullpath, 'r') as json_file:
@@ -55,10 +63,14 @@ def fetch(filename):
 
 @app.route('/new/<filename>', methods=['post'])
 def post_new(filename):
+    # check authentication
     role = get_token_role(request)
-    if role != 'readwrite':
+    if role != 'readwrite' or role != 'admin':
         return 'Token not accepted', 403
+    if role != 'admin' and filename == 'tokens.json':
+        return 'Insufficient privileges to edit tokens', 403
 
+    # try to update/create JSON file
     try:
         fullpath = rectify_filepath(filename)
         with open(fullpath, 'w') as json_file:
