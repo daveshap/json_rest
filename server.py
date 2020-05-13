@@ -12,18 +12,37 @@ def rectify_filepath(filename):
     return fullpath
 
 
+def read_only_auth(token):
+    if token == 'readonlypassword':  # update this
+        return True
+    else:
+        return False
+
+
+def write_auth(token):
+    if token == 'supersecretpassword':  # update this
+        return True
+    else:
+        return False
+    
+
+
 app = flask.Flask('phonebook')
+
 
 
 @app.route('/', methods=['get'])
 def home():
+    if not read_only_auth(request.headers.get('token')):
+        return 'Token not accepted', 403
     files = os.listdir('%s/data' % sys.path[0])
     return flask.Response(json.dumps(files), mimetype='application/json')
 
 
 @app.route('/<filename>', methods=['get'])
 def fetch(filename):
-    # TODO add token-based authentication
+    if not read_only_auth(request.headers.get('token')):
+        return 'Token not accepted', 403
     try:
         fullpath = rectify_filepath(filename)
         with open(fullpath, 'r') as json_file:
@@ -35,16 +54,16 @@ def fetch(filename):
 
 @app.route('/new/<filename>', methods=['post'])
 def post_new(filename):
-    # TODO add token-based authentication
+    if not write_auth(request.headers.get('token')):
+        return 'Token not accepted', 403
     try:
         fullpath = rectify_filepath(filename)
         with open(fullpath, 'w') as json_file:
             json.dump(request.get_json(), json_file)
-        return 'success', 200
+        return 'success', 201
     except Exception as oops:
         return str(oops), 500
 
 
 if __name__ == '__main__':
-    # TODO add HTTPS support
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=443, ssl_context='adhoc')
